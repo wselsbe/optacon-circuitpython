@@ -55,7 +55,8 @@ class DRV2665:
         self._device = i2c_device.I2CDevice(i2c, address)
         self._validate_chipid()
 
-        self.reset()
+        self._read_register1()
+        self._read_register2()
 
     def _validate_chipid(self):
         self._read_register1()
@@ -65,8 +66,6 @@ class DRV2665:
 
     def reset(self):
         self._write_u8(_REGISTER_2, _RESET)
-        self._read_register1()
-        self._read_register2()    
 
     @property
     def gain(self) -> int:
@@ -138,12 +137,14 @@ class DRV2665:
 
     def _read_register1(self):
         self._register1_value = self._read_u8(_REGISTER_1)
+        print(f"register1: {self._register1_value:#010b}")
         
     def _write_register1(self):
         self._write_u8(_REGISTER_1, self._register1_value)    
     
     def _read_register2(self):
         self._register2_value = self._read_u8(_REGISTER_2)
+        print(f"register2: {self._register2_value:#010b}")
 
     def _write_register2(self):
         self._write_u8(_REGISTER_2, self._register2_value)        
@@ -155,6 +156,7 @@ class DRV2665:
         return self._BUFFER[0]
 
     def _write_u8(self, address: int, value: int) -> None:
+        print(f"writing {hex(address)} {value:#010b}")
         with self._device as i2c:
             self._BUFFER[0] = address & 0xFF
             self._BUFFER[1] = value & 0xFF

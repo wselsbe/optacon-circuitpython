@@ -23,7 +23,7 @@ class ShiftRegister:
         self._data = bytearray(4)
 
         self._polarity = polarity
-        self._polarity.value = True
+        self._polarity.value = False
 
         self._validate()
 
