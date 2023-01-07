@@ -34,6 +34,8 @@ class ShiftRegister:
             assert self._data[0] == _PINS_NONE[0] and self._data[1] == _PINS_NONE[1] and self._data[2] == _PINS_NONE[2] and self._data[3] == _PINS_NONE[3]
             spi.write_readinto(_PINS_NONE, self._data)
             assert self._data[0] == _PINS_ALL[0] and self._data[1] == _PINS_ALL[1] and self._data[2] == _PINS_ALL[2] and self._data[3] == _PINS_ALL[3]
+            spi.write_readinto(_PINS_NONE, self._data)
+            assert self._data[0] == _PINS_NONE[0] and self._data[1] == _PINS_NONE[1] and self._data[2] == _PINS_NONE[2] and self._data[3] == _PINS_NONE[3]
 
     def toggle_polarity(self):
         self.polarity.value = not self.polarity.value
@@ -47,7 +49,6 @@ class ShiftRegister:
             self._data[byte_index] |= byte_mask
         else:
             self._data[byte_index] &= ~byte_mask
-
 
     def write(self):
         self._data[0] &= ~_MASK_COMMON_U1  # PZT_Common always 0
