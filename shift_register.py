@@ -18,7 +18,7 @@ class ShiftRegister:
         spi: SPI,
         latch: DigitalInOut,
         polarity: DigitalInOut,        
-        baudrate: int = 250 * 1000
+        baudrate: int = 250*1000
     ) -> None:
         self._device = SPIDevice(spi, latch, baudrate=baudrate)
         self._data = bytearray(4)
@@ -73,6 +73,7 @@ class ShiftRegister:
             spi.write(self._data)
             spi.write_readinto(self._data, self._read_buffer)
             try:
+                print(f"read spi {self._read_buffer[0]:#010b} {self._read_buffer[1]:#010b} {self._read_buffer[2]:#010b} {self._read_buffer[3]:#010b}")
                 assert self._data[0] == self._read_buffer[0]
                 assert self._data[1] == self._read_buffer[1]
                 assert self._data[2] == self._read_buffer[2]

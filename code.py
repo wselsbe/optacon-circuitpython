@@ -13,7 +13,7 @@ def get_shift_register() -> ShiftRegister:
     spi = SPI(clock = board.GP6, MOSI=board.GP7, MISO=board.GP4)
 
     latch = DigitalInOut(board.GP5)
-    latch.switch_to_output()
+    latch.switch_to_output(value=False)
 
     polarity=DigitalInOut(board.GP10)
     polarity.switch_to_output()
