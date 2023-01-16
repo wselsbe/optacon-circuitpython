@@ -41,14 +41,17 @@ class ShiftRegister:
         self._data[3] = _PINS_NONE[3]
 
     def _validate(self):
-        with self._device as spi:
-            spi.write(_PINS_NONE)
-            spi.write_readinto(_PINS_ALL, self._read_buffer)
-            assert self._read_buffer[0] == _PINS_NONE[0] and self._read_buffer[1] == _PINS_NONE[1] and self._read_buffer[2] == _PINS_NONE[2] and self._read_buffer[3] == _PINS_NONE[3]
-            spi.write_readinto(_PINS_NONE, self._read_buffer)
-            assert self._read_buffer[0] == _PINS_ALL[0] and self._read_buffer[1] == _PINS_ALL[1] and self._read_buffer[2] == _PINS_ALL[2] and self._read_buffer[3] == _PINS_ALL[3]
-            spi.write_readinto(_PINS_NONE, self._read_buffer)
-            assert self._read_buffer[0] == _PINS_NONE[0] and self._read_buffer[1] == _PINS_NONE[1] and self._read_buffer[2] == _PINS_NONE[2] and self._read_buffer[3] == _PINS_NONE[3]
+        failed_pins = []
+        for pin in range(1, 20 + 1):
+            self.reset()
+            self.set_pin(pin, True)
+            try:
+                self._write_verify()
+                print(f"pin {pin} PASS")
+            except AssertionError:
+                print(f"pin {pin} FAIL")
+                failed_pins.append(pin)
+        print(f"failed pins: {failed_pins}")
 
     def toggle_polarity(self):
         self._polarity.value = not self._polarity.value
@@ -83,12 +86,9 @@ class ShiftRegister:
         with self._device as spi:
             spi.write(self._data)
             spi.write_readinto(self._data, self._read_buffer)
-            try:
-                print(f"read spi {self._read_buffer[0]:#010b} {self._read_buffer[1]:#010b} {self._read_buffer[2]:#010b} {self._read_buffer[3]:#010b}")
-                assert self._data[0] == self._read_buffer[0]
-                assert self._data[1] == self._read_buffer[1]
-                assert self._data[2] == self._read_buffer[2]
-                assert self._data[3] == self._read_buffer[3]
-            except AssertionError:
-                spi.write(_PINS_NONE)  # all outputs off to avoid shorts on PZT_Common
-                raise
+        print(
+            f"read spi {self._read_buffer[0]:#010b} {self._read_buffer[1]:#010b} {self._read_buffer[2]:#010b} {self._read_buffer[3]:#010b}")
+        assert self._data[0] == self._read_buffer[0] and \
+               self._data[1] == self._read_buffer[1] and \
+               self._data[2] == self._read_buffer[2] and \
+               self._data[3] == self._read_buffer[3]
