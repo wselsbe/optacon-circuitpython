@@ -1,34 +1,33 @@
-import microcontroller
-from busio import SPI
-from adafruit_bus_device.spi_device import SPIDevice
-from digitalio import DigitalInOut
+from machine import Pin, SPI
+from micropython import const
 
-_MASK_COMMON_U1 = 0b00111111
-_MASK_COMMON_U2 = 0b11111100
+_MASK_COMMON_U1 = const(0b00111111)
+_MASK_COMMON_U2 = const(0b11111100)
 
 _PINS_ALL = bytes([0xFF, 0xFF & ~_MASK_COMMON_U1, 0xFF & ~_MASK_COMMON_U2, 0xFF])
 _PINS_NONE = bytes([0, 0, 0, 0])
 
 
 class ShiftRegister:
-    _device: SPIDevice
     _data: bytearray
     _read_buffer: bytearray
 
     def __init__(
             self,
             spi: SPI,
-            latch: microcontroller.Pin,
-            polarity: microcontroller.Pin,
-            baudrate: int = 10 * 1000
+            latch: Pin,
+            polarity: Pin
     ) -> None:
-        self._device = SPIDevice(spi, latch, baudrate=baudrate)
+        self._spi = spi
+
+        self._latch = latch
+        self._latch.value(0)
+
+        self._polarity = polarity
+        self._polarity.value(0)
+
         self._data = bytearray(4)
         self._read_buffer = bytearray(4)
-
-        self._polarity = DigitalInOut(polarity)
-        self._polarity.switch_to_output()
-        self._polarity.value = True
 
         self.reset()
 
@@ -83,12 +82,14 @@ class ShiftRegister:
 
     def _write_verify(self):
         print(f"writing spi {self._data[0]:#010b} {self._data[1]:#010b} {self._data[2]:#010b} {self._data[3]:#010b}")
-        with self._device as spi:
-            spi.write(self._data)
-            spi.write_readinto(self._data, self._read_buffer)
-        print(
-            f"read spi {self._read_buffer[0]:#010b} {self._read_buffer[1]:#010b} {self._read_buffer[2]:#010b} {self._read_buffer[3]:#010b}")
-        assert self._data[0] == self._read_buffer[0] and \
-               self._data[1] == self._read_buffer[1] and \
-               self._data[2] == self._read_buffer[2] and \
-               self._data[3] == self._read_buffer[3]
+        try:
+            self._latch(0)
+            self._spi.write(self._data)
+            self._spi.write_readinto(self._data, self._read_buffer)
+            print(f"read spi {self._read_buffer[0]:#010b} {self._read_buffer[1]:#010b} {self._read_buffer[2]:#010b} {self._read_buffer[3]:#010b}")
+            assert self._data[0] == self._read_buffer[0] and \
+                   self._data[1] == self._read_buffer[1] and \
+                   self._data[2] == self._read_buffer[2] and \
+                   self._data[3] == self._read_buffer[3]
+        finally:
+            self._latch(1)
