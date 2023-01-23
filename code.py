@@ -11,17 +11,19 @@ shift_register: ShiftRegister
 
 
 def get_shift_register() -> ShiftRegister:
-    spi = SPI(clock=board.GP6, MOSI=board.GP7, MISO=board.GP4)
+    spi = SPI(clock=board.IO36, MOSI=board.IO35, MISO=board.IO37)
+    while not spi.try_lock():
+        time.sleep(0)
 
-    latch = DigitalInOut(board.GP5)
-    latch.switch_to_output(value=False)
 
-    shift_register = ShiftRegister(spi=spi, latch=board.GP5, polarity=board.GP10)
+    shift_register = ShiftRegister(spi=spi, latch=board.IO7, polarity=board.IO34)
     return shift_register
+    #return None
+
 
 
 def get_drv() -> DRV2665:
-    i2c = I2C(scl=board.GP1, sda=board.GP0)
+    i2c = I2C(scl=board.IO9, sda=board.IO8)
     drv_found = scan_for_drv(i2c)
     if drv_found:
         print("DRV2665 found")
@@ -60,9 +62,11 @@ def reset_drv(i2c: I2C):
 
 
 def main():
+    print("hello world")
     global drv, shift_register
     # drv = get_drv()
     shift_register = get_shift_register()
+    print("get done")
 
     # shift_register.set_pin(1, True)
     # shift_register.set_pin(2, True)

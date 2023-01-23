@@ -1,7 +1,7 @@
 import microcontroller
 from busio import SPI
-from adafruit_bus_device.spi_device import SPIDevice
 from digitalio import DigitalInOut
+import time
 
 _MASK_COMMON_U1 = 0b00111111
 _MASK_COMMON_U2 = 0b11111100
@@ -11,7 +11,7 @@ _PINS_NONE = bytes([0, 0, 0, 0])
 
 
 class ShiftRegister:
-    _device: SPIDevice
+    _spi: SPI
     _data: bytearray
     _read_buffer: bytearray
 
@@ -20,17 +20,19 @@ class ShiftRegister:
             spi: SPI,
             latch: microcontroller.Pin,
             polarity: microcontroller.Pin,
-            baudrate: int = 10 * 1000
+            baudrate: int = 100 * 1000
     ) -> None:
-        self._device = SPIDevice(spi, latch, baudrate=baudrate)
+        self._spi = spi
         self._data = bytearray(4)
         self._read_buffer = bytearray(4)
 
-        self._polarity = DigitalInOut(polarity)
-        self._polarity.switch_to_output()
-        self._polarity.value = True
+        self._spi.configure(baudrate=baudrate)
 
-        self.reset()
+        self._latch = DigitalInOut(latch)
+        self._latch.switch_to_output(value=False)
+
+        self._polarity = DigitalInOut(polarity)
+        self._polarity.switch_to_output(value=True)
 
         self._validate()
 
@@ -52,6 +54,9 @@ class ShiftRegister:
                 print(f"pin {pin} FAIL")
                 failed_pins.append(pin)
         print(f"failed pins: {failed_pins}")
+
+        self.reset()
+        self.write()
 
     def toggle_polarity(self):
         self._polarity.value = not self._polarity.value
@@ -83,12 +88,15 @@ class ShiftRegister:
 
     def _write_verify(self):
         print(f"writing spi {self._data[0]:#010b} {self._data[1]:#010b} {self._data[2]:#010b} {self._data[3]:#010b}")
-        with self._device as spi:
-            spi.write(self._data)
-            spi.write_readinto(self._data, self._read_buffer)
-        print(
-            f"read spi {self._read_buffer[0]:#010b} {self._read_buffer[1]:#010b} {self._read_buffer[2]:#010b} {self._read_buffer[3]:#010b}")
+        self._latch.value = False
+        self._spi.write(self._data)
+        self._spi.write_readinto(self._data, self._read_buffer)
+        print(f"read spi {self._read_buffer[0]:#010b} {self._read_buffer[1]:#010b} {self._read_buffer[2]:#010b} {self._read_buffer[3]:#010b}")
         assert self._data[0] == self._read_buffer[0] and \
-               self._data[1] == self._read_buffer[1] and \
-               self._data[2] == self._read_buffer[2] and \
-               self._data[3] == self._read_buffer[3]
+            self._data[1] == self._read_buffer[1] and \
+            self._data[2] == self._read_buffer[2] and \
+            self._data[3] == self._read_buffer[3]
+        self._latch.value = True
+        time.sleep(0.001)
+        self._latch.value = False
+
