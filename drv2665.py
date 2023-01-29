@@ -126,6 +126,13 @@ class DRV2665:
         self._register2_value &= ~_ENABLE_MASK
         self._register2_value |= value
         self._write_register2()
+
+    def enable_analog(self) -> None:
+        self.standby=False
+        self.input=INPUT_ANALOG
+        self.gain=GAIN_100V
+        self.timeout=TIMEOUT_20MS
+        self.enable=ENABLE_OVERRIDE
     
     @property
     def queue_empty_full(self) -> tuple[bool, bool]:
