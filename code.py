@@ -1,9 +1,9 @@
-from busio import SPI
+from busio import SPI, I2C
 from digitalio import DigitalInOut
 import board
 import time
 
-from drv2665 import *
+from drv2665 import DRV2665, DRV2665_ADDR
 from shift_register import ShiftRegister
 
 drv: DRV2665
@@ -29,10 +29,6 @@ def get_drv() -> DRV2665:
         print("DRV2665 found")
         reset_drv(i2c)
         drv = DRV2665(i2c=i2c)
-
-        drv.standby = False
-        drv.input = INPUT_ANALOG
-        drv.gain = GAIN_100V
         # drv.reset()
         return drv
     else:
@@ -80,12 +76,8 @@ def main():
     # shift_register.set_pin(10, True)
     # shift_register.write()
 
-    # drv.standby=False
-    # drv.input=INPUT_ANALOG
-    # drv.gain=GAIN_100V
-    # drv.timeout=TIMEOUT_20MS
-    # drv.enable=ENABLE_OVERRIDE
-    time.sleep(10)
+    # drv.enable_analog()
+
 
 
 if __name__ == "__main__":
