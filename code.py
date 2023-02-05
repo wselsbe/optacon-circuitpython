@@ -20,6 +20,52 @@ def get_shift_register() -> ShiftRegister:
     return shift_register
     #return None
 
+def test_setup():
+    global drv, shift_register
+    
+    drv = get_drv()
+    shift_register = get_shift_register()
+
+
+def test():
+    global drv, shift_register
+    
+    print("drv I2C test...")
+    drv.standby = True
+
+    print("shift register SPI test")
+    shift_register._validate()
+
+    print("drv HV test")
+    #assuming analog signal in
+    drv.enable_analog()
+
+    print("shift register HV test")
+    shift_register.set_even_pins(latch=True)
+    time.sleep(0.5)
+    shift_register.reset(latch=True)
+    time.sleep(0.5)
+    shift_register.set_even_pins(latch=True)
+    shift_register.toggle_polarity()
+    time.sleep(0.5)
+    shift_register.reset(latch=True)
+    time.sleep(0.5)
+    shift_register.set_odd_pins(latch=True)
+    time.sleep(0.5)
+    shift_register.reset(latch=True)
+    time.sleep(0.5)
+    shift_register.set_odd_pins(latch=True)
+    shift_register.toggle_polarity()    
+    time.sleep(0.5)
+
+    print("test reset")
+    shift_register.reset(latch=True)
+    drv.reset()
+    time.sleep(0.5)
+
+    print("test complete")
+
+
 
 
 def get_drv() -> DRV2665:
@@ -29,6 +75,7 @@ def get_drv() -> DRV2665:
         print("DRV2665 found")
         reset_drv(i2c)
         drv = DRV2665(i2c=i2c)
+
         # drv.reset()
         return drv
     else:
@@ -52,31 +99,14 @@ def reset_drv(i2c: I2C):
         pass
     try:
         i2c.writeto(DRV2665_ADDR, bytes([0x02, 1 << 7]))
-        time.sleep(1)
+        time.sleep(0.5)
     finally:
         i2c.unlock()
 
 
 def main():
     print("hello world")
-    global drv, shift_register
-    # drv = get_drv()
-    shift_register = get_shift_register()
-    print("get done")
 
-    # shift_register.set_pin(1, True)
-    # shift_register.set_pin(2, True)
-    # shift_register.set_pin(3, True)
-    # shift_register.set_pin(4, True)
-    # shift_register.set_pin(5, True)
-    # shift_register.set_pin(6, True)
-    # shift_register.set_pin(7, True)
-    # shift_register.set_pin(8, True)
-    # shift_register.set_pin(9, True)
-    # shift_register.set_pin(10, True)
-    # shift_register.write()
-
-    # drv.enable_analog()
 
 
 

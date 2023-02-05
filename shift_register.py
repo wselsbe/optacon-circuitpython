@@ -34,15 +34,20 @@ class ShiftRegister:
         self._polarity = DigitalInOut(polarity)
         self._polarity.switch_to_output(value=True)
 
-        self._validate()
+        #self._validate()
 
-    def reset(self):
+    def reset(self, latch: bool = False):
         self._data[0] = _PINS_NONE[0]
         self._data[1] = _PINS_NONE[1]
         self._data[2] = _PINS_NONE[2]
         self._data[3] = _PINS_NONE[3]
 
+        if latch:
+            self.latch()
+
     def _validate(self):
+        self.reset(latch=True)
+
         failed_pins = []
         for pin in range(1, 20 + 1):
             self.reset()
@@ -55,13 +60,12 @@ class ShiftRegister:
                 failed_pins.append(pin)
         print(f"failed pins: {failed_pins}")
 
-        self.reset()
-        self.write()
+        self.reset(latch=True)
 
     def toggle_polarity(self):
         self._polarity.value = not self._polarity.value
 
-    def set_pin(self, pin: int, value: bool):
+    def set_pin(self, pin: int, value: bool, latch: bool = False):
         assert 1 <= pin <= 20
         if pin <= 2:
             byte_index = 0
@@ -81,7 +85,24 @@ class ShiftRegister:
         else:
             self._data[byte_index] &= ~byte_mask
 
-    def write(self):
+        if latch:
+            self.latch()
+
+    def set_even_pins(self, latch: bool = False):
+        for pin in range(1, 20+1):
+            self.set_pin(pin, pin % 2 == 0)
+
+        if latch:
+            self.latch()
+
+    def set_odd_pins(self, latch: bool = False):
+        for pin in range(1, 20+1):
+            self.set_pin(pin, pin %2 != 0)
+
+        if latch:
+            self.latch()
+
+    def latch(self):
         self._data[0] &= ~_MASK_COMMON_U1  # PZT_Common always 0
         self._data[3] &= ~_MASK_COMMON_U2
         self._write_verify()
